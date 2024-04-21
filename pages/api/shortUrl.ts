@@ -23,7 +23,6 @@ export async function handleExistingLink(ip: string, linkId: number) {
   });
 }
 
-
 export async function createLinkAndLog(ip: string, url: string) {
   const shortUrl = Math.random().toString(36).substring(2, 10);
   const link = await prisma.link.create({
@@ -49,14 +48,16 @@ async function shortUrlHandler(
       .status(400)
       .json({ error: "URL parameter is missing or invalid" });
   }
-
+  const normalizedUrl = url.toLowerCase();
   try {
-    const existingLink = await prisma.link.findUnique({ where: { url } });
+    const existingLink = await prisma.link.findUnique({
+      where: { url: normalizedUrl },
+    });
 
     if (existingLink) {
       return res.status(200).json(existingLink);
     } else {
-      const newLink = await createLinkAndLog(ip, url);
+      const newLink = await createLinkAndLog(ip, normalizedUrl);
       return res.status(201).json(newLink);
     }
   } catch (error) {
