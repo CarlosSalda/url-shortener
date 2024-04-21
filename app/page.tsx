@@ -23,7 +23,14 @@ export default function Home() {
         body: JSON.stringify({ url }),
       })
         .then((res) => res.json())
-        .then((data) => setShortURL(data.shortUrl))
+        .then((data) => {
+          setShortURL(data.shortUrl);
+          fireAlert({
+            title: "Success",
+            text: "URL shortened",
+            icon: "success",
+          });
+        })
         .catch((err) => console.error(err));
     } else {
       fireAlert({
