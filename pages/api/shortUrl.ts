@@ -2,52 +2,62 @@ import { extractIp } from "@/lib/ip";
 import { PrismaClient } from "@prisma/client";
 import { NextApiRequest, NextApiResponse } from "next";
 
-const shortUrlHandler = async (
-  req: NextApiRequest,
-  res: NextApiResponse
-): Promise<void> => {
-  const { url }: { url: string } = req.body;
-  const shortUrl: string = Math.random().toString(36).substring(2, 10);
-  const prisma = new PrismaClient();
-  const ip = extractIp(req);
-  try {
-    if (!url) {
-      return res
-        .status(400)
-        .json({ error: "URL parameter is missing or invalid" });
-    }
+const prisma = new PrismaClient();
 
-    const existingLink = await prisma.link.findFirst({
-      where: {
-        url,
-      },
+async function handleExistingLink(ip: string, linkId: number) {
+    const accessLog = await prisma.accessLog.findFirst({
+        where: { linkId, ip },
     });
 
-    if (existingLink) {
-      return res.status(200).send(existingLink);
+    if (accessLog) {
+        await prisma.accessLog.update({
+            where: { id: accessLog.id },
+            data: { timesAccessed: { increment: 1 } },
+        });
+    } else {
+        await prisma.accessLog.create({
+            data: { ip, linkId },
+        });
     }
+}
 
-    const data = await prisma.link.create({
-      data: {
-        url,
-        shortUrl,
-      },
+async function createLinkAndLog(ip: string, url: string) {
+    const shortUrl = Math.random().toString(36).substring(2, 10);
+    const link = await prisma.link.create({
+        data: { url, shortUrl },
     });
 
     await prisma.accessLog.create({
-      data: {
-        ip: ip || "unknown",
-        linkId: data.id,
-      },
+        data: { ip, linkId: link.id },
     });
 
-    await prisma.$disconnect();
+    return link;
+}
 
-    return res.status(201).send(data);
-  } catch (error: any) {
-    console.error(error);
-    return res.status(500).json({ error: error.message });
-  }
-};
+async function shortUrlHandler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
+    const { url }: { url: string } = req.body;
+    const ip = extractIp(req) || "unknown";
+
+    if (!url) {
+        return res.status(400).json({ error: "URL parameter is missing or invalid" });
+    }
+
+    try {
+        const existingLink = await prisma.link.findUnique({ where: { url } });
+        
+        if (existingLink) {
+            await handleExistingLink(ip, existingLink.id);
+            return res.status(200).json(existingLink);
+        } else {
+            const newLink = await createLinkAndLog(ip, url);
+            return res.status(201).json(newLink);
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+    } finally {
+        await prisma.$disconnect();
+    }
+}
 
 export default shortUrlHandler;
