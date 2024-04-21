@@ -43,7 +43,7 @@ export default function Home() {
 
   const copyUrlToClipboard = (e: React.FormEvent) => {
     e.preventDefault();
-    navigator.clipboard.writeText(`${baseUrl}/${shortURL}`).then(
+    navigator.clipboard.writeText(`${baseUrl}${shortURL}`).then(
       () => {
         fireAlert({
           title: "Success",
@@ -95,7 +95,7 @@ export default function Home() {
             <input
               type="text"
               readOnly
-              value={`${baseUrl}/${shortURL}` || ""}
+              value={`${baseUrl}${shortURL}` || ""}
               className="flex-1 px-4 py-2 border rounded text-gray-700 bg-gray-100 cursor-not-allowed"
             />
 
