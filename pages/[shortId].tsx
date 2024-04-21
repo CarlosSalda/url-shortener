@@ -2,6 +2,7 @@ import { extractIp } from "@/lib/ip";
 import { PrismaClient } from "@prisma/client";
 import { NextApiRequest } from "next";
 import React from "react";
+import { handleExistingLink } from "./api/shortUrl";
 
 export default function TestPage() {
   return <div> Redirect ShortId </div>;
@@ -34,23 +35,9 @@ export async function getServerSideProps(context: Params) {
     where: { shortUrl: shortId },
   });
 
-  await prisma.$transaction([
-    prisma.accessLog.updateMany({
-      where: {
-        linkId: link?.id,
-        ip: ip || "unknown",
-      },
-      data: {
-        timesAccessed: {
-          increment: 1,
-        },
-      },
-    }),
-  ]);
-
-  await prisma.$disconnect();
-
   if (!link) {
+    await prisma.$disconnect();
+
     return {
       redirect: {
         destination: "/",
@@ -58,6 +45,9 @@ export async function getServerSideProps(context: Params) {
       },
     };
   }
+
+  await handleExistingLink(ip!, link.id);
+  await prisma.$disconnect();
 
   return {
     redirect: {
