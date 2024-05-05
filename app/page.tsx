@@ -7,8 +7,8 @@ export default function Home() {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const recaptchaRef = React.useRef<ReCAPTCHA>(null);
   const [shortURL, setShortURL] = React.useState("");
-  const keyCaptcha = process.env.NEXT_PUBLIC_KEY_WEB_CAPTCHA || "";
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
+  const keyCaptcha = process.env.NEXT_PUBLIC_KEY_WEB_CAPTCHA ?? "";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -41,7 +41,7 @@ async function shortUrlHandler(
   res: NextApiResponse
 ): Promise<void> {
   const { url }: { url: string } = req.body;
-  const ip = extractIp(req) || "unknown";
+  const ip = extractIp(req) ?? "unknown";
 
   if (!url) {
     return res

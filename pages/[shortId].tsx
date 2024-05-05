@@ -48,10 +48,9 @@ export async function getServerSideProps(context: Params) {
 
   await handleExistingLink(ip!, link.id);
   await prisma.$disconnect();
-
   return {
     redirect: {
-      destination: `http://${link.url}`,
+      destination: `${link.url}`,
     },
   };
 }
